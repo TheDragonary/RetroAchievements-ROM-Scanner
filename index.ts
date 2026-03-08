@@ -30,14 +30,14 @@ const consoleMap: Record<string, pkg.ConsoleIdValue> = {
     GBA: ConsoleId.GAMEBOY_ADVANCE,
     N64: ConsoleId.NINTENDO_64,
     NDS: ConsoleId.NINTENDO_DS,
-    Genesis: ConsoleId.MEGA_DRIVE,
+    GENESIS: ConsoleId.MEGA_DRIVE,
     MD: ConsoleId.MEGA_DRIVE,
     PSX: ConsoleId.PLAYSTATION,
     PS1: ConsoleId.PLAYSTATION,
     PS2: ConsoleId.PLAYSTATION_2,
     PSP: ConsoleId.PSP,
     GC: ConsoleId.GAMECUBE,
-    Wii: ConsoleId.WII,
+    WII: ConsoleId.WII,
 };
 
 const extensionMap: Record<string, pkg.ConsoleIdValue> = {
@@ -51,10 +51,6 @@ const extensionMap: Record<string, pkg.ConsoleIdValue> = {
     ".z64": ConsoleId.NINTENDO_64,
     ".nds": ConsoleId.NINTENDO_DS,
     ".md": ConsoleId.MEGA_DRIVE,
-    ".chd": ConsoleId.PLAYSTATION,
-    ".bin": ConsoleId.PLAYSTATION,
-    ".iso": ConsoleId.PLAYSTATION_2,
-    ".rvz": ConsoleId.GAMECUBE,
 };
 
 const ignoreSet: Set<string> = new Set([
@@ -141,6 +137,7 @@ for (const file of romFiles) {
         .relative("./ROMs", file)
         .split(path.sep)[0]
         .toUpperCase();
+
     const consoleId = detectConsole(file);
 
     if (!consoleId) {
@@ -152,8 +149,13 @@ for (const file of romFiles) {
     try {
         hash = rhash(consoleId, file);
     } catch (err) {
-        if (err instanceof Error) console.log(`❌ ${folder.padEnd(6)} ${path.basename(file)} -> hashing failed (${err.message})`);
+        if (err instanceof Error) {
+            console.log(
+                `❌ ${folder.padEnd(6)} ${path.basename(file)} -> hashing failed (${err.message})`,
+            );
+        }
     }
+
     if (!hash) continue;
 
     const db = await getHashDatabase(consoleId);
