@@ -9,6 +9,14 @@ dotenv.config({ quiet: true });
 
 const API_KEY = process.env.RA_API_KEY;
 
+interface Console {
+    ID: number;
+    Name: string;
+    IconURL: string;
+    Active: boolean;
+    IsGameSystem: boolean;
+}
+
 interface Game {
     Title: string;
     ID: number;
@@ -45,10 +53,6 @@ const consoleMap: Record<string, number> = {
     PSP: 41,
 };
 
-const consoleFallbacks: Record<number, number[]> = {
-    81: [7], // FDS -> NES
-};
-
 const extensionMap: Record<string, number> = {
     ".nes": 7,
     ".fds": 81,
@@ -81,6 +85,8 @@ const extensionsToIgnore: string[] = [
     ".m3u",
 ];
 
+const globalHashMap = new Map<string, Game>();
+
 const execFileAsync = promisify(execFile);
 
 const HASHER = path.resolve(
@@ -93,40 +99,63 @@ async function raHash(consoleId: number, file: string): Promise<string> {
         consoleId.toString(),
         file,
     ]);
-
     return stdout.trim().toLowerCase();
 }
 
-async function hashRvz(consoleId: number, file: string) {
+async function hashRvz(consoleId: number, file: string): Promise<string> {
     const tempIso = path.join(os.tmpdir(), `${path.basename(file)}.iso`);
-
-    await dolphinTool.convert({
-        inputFilename: file,
-        outputFilename: tempIso,
-        containerFormat: ContainerFormat.ISO,
-    });
-
-    const hash = await raHash(consoleId, tempIso);
-
-    fs.unlinkSync(tempIso);
-
-    return hash;
+    try {
+        await dolphinTool.convert({
+            inputFilename: file,
+            outputFilename: tempIso,
+            containerFormat: ContainerFormat.ISO,
+        });
+        return await raHash(consoleId, tempIso);
+    } finally {
+        if (fs.existsSync(tempIso)) fs.unlinkSync(tempIso);
+    }
 }
 
-async function buildHashDatabase(consoleId: number) {
-    const games: Game[] = await fetch(
-        `https://retroachievements.org/API/API_GetGameList.php?y=${API_KEY}&i=${consoleId}&h=1`,
-    ).then((r) => r.json());
+async function getConsoleList(): Promise<Console[]> {
+    return fetch(
+        `https://retroachievements.org/API/API_GetConsoleIDs.php?y=${API_KEY}&g=1`
+    ).then(r => r.json());
+}
 
-    const map = new Map<string, Game>();
+async function fetchGamesForConsole(consoleId: number, retries = 3, delayMs = 1000): Promise<Game[]> {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            const res = await fetch(
+                `https://retroachievements.org/API/API_GetGameList.php?y=${API_KEY}&i=${consoleId}&h=1`
+            );
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const games: Game[] = await res.json();
+            if (!Array.isArray(games)) throw new Error("Invalid response format");
+            return games;
+        } catch (err) {
+            console.warn(`Failed to fetch console ${consoleId} (attempt ${attempt}): ${(err as Error).message}`);
+            if (attempt < retries) await new Promise(r => setTimeout(r, delayMs));
+        }
+    }
+    return [];
+}
 
-    for (const game of games) {
-        for (const hash of game.Hashes) {
-            map.set(hash.toLowerCase(), game);
+async function buildAllHashDatabases() {
+    const consoles = await getConsoleList();
+
+    for (const c of consoles) {
+        console.log(`Loading ${c.Name}...`);
+        
+        const games = await fetchGamesForConsole(c.ID);
+
+        for (const game of games) {
+            for (const hash of game.Hashes ?? []) {
+                globalHashMap.set(hash.toLowerCase(), game);
+            }
         }
     }
 
-    return map;
+    console.log(`Loaded ${globalHashMap.size} hashes`);
 }
 
 function scanRomFolder(dir: string): string[] {
@@ -163,15 +192,7 @@ function detectConsole(file: string): number | null {
     return null;
 }
 
-async function getHashDatabase(consoleId: number) {
-    if (!hashDatabases.has(consoleId)) {
-        const db = await buildHashDatabase(consoleId);
-        hashDatabases.set(consoleId, db);
-    }
-    return hashDatabases.get(consoleId)!;
-}
-
-const hashDatabases = new Map<number, Map<string, Game>>();
+await buildAllHashDatabases();
 const romFiles = scanRomFolder("./ROMs");
 
 let supported = 0;
@@ -192,9 +213,8 @@ for (const file of romFiles) {
         continue;
     }
 
-    total++;
-    
     let hash;
+    
     try {
         if (ext === ".rvz") {
             hash = await hashRvz(consoleId, file);
@@ -204,29 +224,21 @@ for (const file of romFiles) {
     } catch (err) {
         if (err instanceof Error) {
             console.log(
-                `❌ ${folder.padEnd(6)} ${path.basename(file)} -> ${err.message}`,
+                `❌ ${folder.padEnd(8)} ${path.basename(file)} -> ${err.message}`,
             );
         }
     }
 
+    total++;
+
     if (!hash) continue;
 
-    let game: Game | undefined;
-    const db = await getHashDatabase(consoleId);
-    game = db.get(hash);
-
-    if (!game && consoleFallbacks[consoleId]) {
-        for (const fallback of consoleFallbacks[consoleId]) {
-            const fallbackDb = await getHashDatabase(fallback);
-            game = fallbackDb.get(hash);
-            if (game) break;
-        }
-    }
+    const game = globalHashMap.get(hash);
 
     if (game) supported++;
 
     console.log(
-        `${game?.Title ? "✅" : "❌"} ${folder.padEnd(8)} ${path.basename(file)} -> ${game?.Title ?? "Not supported"}`,
+        `${game ? "✅" : "❌"} ${folder.padEnd(8)} ${path.basename(file)} -> ${game?.Title ?? "Not supported"}`,
     );
 }
 
