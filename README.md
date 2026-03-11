@@ -27,10 +27,6 @@ It calculates ROM hashes and compares them against the official RetroAchievement
 - PlayStation 2
 - PlayStation Portable
 
-CHD files are supported natively.
-
-RVZ files are temporarily converted to ISO in order to compute the correct RetroAchievements hash. The temporary ISO file is automatically deleted after hashing. 
-
 ## Output
 The script will:
 - Scan all ROM files inside the ROMs directory

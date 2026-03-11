@@ -1,4 +1,4 @@
-import dolphinTool, { ContainerFormat } from "dolphin-tool";
+import dolphinTool, { DigestAlgorithm } from "dolphin-tool";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import * as dotenv from "dotenv";
@@ -99,21 +99,17 @@ async function raHash(consoleId: number, file: string): Promise<string> {
         consoleId.toString(),
         file,
     ]);
-    return stdout.trim().toLowerCase();
+    if (stdout) return stdout.trim().toLowerCase();
+    else throw new Error("Failed to hash file");
 }
 
-async function hashRvz(consoleId: number, file: string): Promise<string> {
-    const tempIso = path.join(os.tmpdir(), `${path.basename(file)}.iso`);
-    try {
-        await dolphinTool.convert({
-            inputFilename: file,
-            outputFilename: tempIso,
-            containerFormat: ContainerFormat.ISO,
-        });
-        return await raHash(consoleId, tempIso);
-    } finally {
-        if (fs.existsSync(tempIso)) fs.unlinkSync(tempIso);
-    }
+async function hashRvz(file: string): Promise<string> {
+    const hash = await dolphinTool.verify({
+        inputFilename: file,
+        digestAlgorithm: DigestAlgorithm.RCHASH
+    });
+    if (hash.rchash) return hash.rchash;
+    else throw new Error("Failed to hash RVZ file");
 }
 
 async function getConsoleList(): Promise<Console[]> {
@@ -330,7 +326,7 @@ for (let i = 0; i < romFiles.length; i++) {
     if (!hash) {
         try {
             if (ext === ".rvz") {
-                hash = await hashRvz(consoleId, file);
+                hash = await hashRvz(file);
             } else {
                 hash = await raHash(consoleId, file);
             }
