@@ -12,6 +12,7 @@ It calculates ROM hashes and compares them against the official RetroAchievement
 - Caches RetroAchievements console and game data
 - Caches previously calculated ROM hashes for faster rescans
 - Generates lists of supported and unsupported games
+- Detects duplicate games
 
 ## Supported Systems
 - NES / Famicom Disk System
@@ -38,8 +39,9 @@ The script will:
 - Compare the hash against the official database
 - Cache API responses locally
 - Cache calculated ROM hashes
-- Output supported and unsupported games
+- Output supported, unsupported games and any duplicates
 - Display total supported games
+- Save results to text files
 
 Example output:
 ```

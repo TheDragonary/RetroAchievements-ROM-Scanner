@@ -303,16 +303,16 @@ for (const file of romFiles) {
     const game = globalHashMap.get(hash);
 
     if (!hashIndex.has(hash)) hashIndex.set(hash, []);
-    
     const list = hashIndex.get(hash)!;
-    if (!list.includes(relative)) list.push(relative);
+    const set = new Set(list);
+    set.add(relative);
+    hashIndex.set(hash, [...set]);
 
     if (list.length > 1) {
-        console.log("Duplicate ROM detected:");
-        console.log(list.join("\n"));
-
         for (const p of list) {
             duplicateGames.set(p, hash);
+            supportedGames.delete(p);
+            unsupportedGames.delete(p);
         }
     }
 
@@ -336,6 +336,24 @@ fs.writeFileSync("./cache/hash_index.json", JSON.stringify(Object.fromEntries(ha
 
 fs.writeFileSync("supported_games.txt", Array.from(supportedGames.keys()).join("\n"));
 fs.writeFileSync("unsupported_games.txt", Array.from(unsupportedGames.keys()).join("\n"));
+
+if (duplicateGames.size > 0) {
+    console.log("\nDuplicate ROMs:");
+
+    const grouped = new Map<string, string[]>();
+
+    for (const [file, hash] of duplicateGames) {
+        if (!grouped.has(hash)) grouped.set(hash, []);
+        grouped.get(hash)!.push(file);
+    }
+
+    for (const [, files] of grouped) {
+        if (files.length > 1) {
+            console.log("---");
+            for (const f of files) console.log(f);
+        }
+    }
+}
 
 if (duplicateGames.size > 0) {
     fs.writeFileSync("./cache/duplicate_games.json", JSON.stringify(Object.fromEntries(duplicateGames), null, 2));
