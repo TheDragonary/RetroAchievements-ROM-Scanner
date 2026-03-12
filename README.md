@@ -1,10 +1,18 @@
-# RetroAchievements Checker
+# RetroAchievements ROM Scanner
 
 A tool that scans your ROM library and matches each file with its corresponding RetroAchievements entry using the RetroAchievements API.
 
 It calculates ROM hashes and compares them against the official RetroAchievements hash database to identify which games in your collection support achievements.
 
+## Download
+
+If you prefer to use Node.js, go to [Getting Started](https://github.com/TheDragonary/RetroAchievements-ROM-Scanner?tab=readme-ov-file#getting-started) and follow the instructions there. Otherwise, you can download the precompiled binaries from [Releases](https://github.com/TheDragonary/RetroAchievements-ROM-Scanner/releases). We also have an [NPM package](https://www.npmjs.com/package/ra-scan) available too.
+
+- [Windows](https://github.com/TheDragonary/RetroAchievements-ROM-Scanner/releases/latest/download/ra-scan-windows-x64.zip)
+- [Linux](https://github.com/TheDragonary/RetroAchievements-ROM-Scanner/releases/latest/download/ra-scan-linux-x64.tar.gz)
+
 ## Features
+
 - Scans a ROM library and detects supported RetroAchievements games
 - Uses the official RetroAchievements hash database
 - Supports compressed and disc formats (CHD, RVZ)
@@ -15,6 +23,7 @@ It calculates ROM hashes and compares them against the official RetroAchievement
 - Detects duplicate games
 
 ## Supported Systems
+
 - NES / Famicom Disk System
 - SNES
 - Nintendo 64
@@ -28,6 +37,7 @@ It calculates ROM hashes and compares them against the official RetroAchievement
 - PlayStation Portable
 
 ## Output
+
 The script will:
 - Scan all ROM files inside the ROMs directory
 - Detect the console for each ROM
@@ -47,19 +57,27 @@ Example output:
 ```
 
 ## Getting Started
+
+### Run with npx
+
+Make sure Node.js is installed on your system, then run the script using `npx`.
+
+```
+npx ra-scan ROMs/ -k YOUR_API_KEY
+```
+
+### Install with Node.js
+
+Make sure Node.js is installed on your system.
+
 Clone the repo
 ```
-git clone https://github.com/TheDragonary/RetroAchievements-Checker.git
+git clone https://github.com/TheDragonary/RetroAchievements-ROM-Scanner.git
 ```
 
 Install dependencies
 ```
 npm install
-```
-
-Create a `.env` file in the root directory and add your RetroAchievements API key.
-```dotenv
-RA_API_KEY=your_api_key
 ```
 
 Place your ROMs inside a folder. Folder names should match the entries in `consoleMap`. Example structure:
@@ -77,7 +95,7 @@ ROMs/
         Final Fantasy VII (USA) (Disc 1).chd
 ```
 
-Run the script and make sure to specify the path to your ROMs folder. Example:
+Run the script. Make sure to specify the path to your ROMs folder and supply your RetroAchievements API key. Subsequent runs don't require an API key as all data is stored in cache.
 ```
-node index.ts ./ROMs
+npm run start ROMs/ --api-key YOUR_API_KEY
 ```

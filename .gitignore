@@ -1,7 +1,7 @@
 node_modules
 .env
 ROMs
+dist
 cache
-supported_games.txt
-unsupported_games.txt
-duplicate_games.txt
+*.txt
+ra-scan*
