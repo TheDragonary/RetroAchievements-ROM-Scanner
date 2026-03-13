@@ -4,11 +4,13 @@ import { promisify } from "util";
 import envPaths from "env-paths";
 import path from "path";
 import fs from "fs";
+import type { Console, Game } from "./types.js";
+import { allowedExtensions, detectSystemFromExtension, detectSystemFromFolder } from "./systems.js";
 
 export async function runScanner(romFolder: string, apiKey?: string) {
     const paths = envPaths("ra-scan");
 
-    const APP_DIR = path.dirname(process.execPath);
+    const APP_DIR = path.resolve(path.dirname(new URL(import.meta.url).pathname), "../"); 
     const CACHE_DIR = paths.cache;
 
     if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
@@ -19,81 +21,11 @@ export async function runScanner(romFolder: string, apiKey?: string) {
     const duplicatesPath = path.join(CACHE_DIR, "duplicate_games.json");
     const hashIndexPath = path.join(CACHE_DIR, "hash_index.json");
 
-    interface Console {
-        ID: number;
-        Name: string;
-        IconURL: string;
-        Active: boolean;
-        IsGameSystem: boolean;
-    }
-
-    interface Game {
-        Title: string;
-        ID: number;
-        ConsoleID: number;
-        ConsoleName: string;
-        ImageIcon: string;
-        NumAchievements: number;
-        NumLeaderboards: number;
-        Points: number;
-        DateModified: string;
-        ForumTopicID: number;
-        Hashes: string[];
-    }
-
-    const consoleMap: Record<string, number> = {
-        NES: 7,
-        FDS: 81,
-        SNES: 3,
-        N64: 2,
-        GB: 4,
-        GBC: 6,
-        GBA: 5,
-        NDS: 18,
-        DSI: 78,
-        GC: 16,
-        WII: 19,
-        "3DS": 62,
-        "WII U": 20,
-        GENESIS: 1,
-        MD: 1,
-        PSX: 12,
-        PS1: 12,
-        PS2: 21,
-        PSP: 41,
-    };
-
-    const extensionMap: Record<string, number> = {
-        ".nes": 7,
-        ".fds": 81,
-        ".sfc": 3,
-        ".smc": 3,
-        ".gb": 4,
-        ".gbc": 6,
-        ".gba": 5,
-        ".z64": 2,
-        ".nds": 18,
-        ".3ds": 62,
-        ".md": 1,
-    };
-
     const ignoreSet: Set<string> = new Set([
         ".directory",
         "thumbs.db",
         ".ds_store",
     ]);
-
-    const extensionsToIgnore: string[] = [
-        ".ram",
-        ".sav",
-        ".state",
-        ".srm",
-        ".png",
-        ".jpg",
-        ".txt",
-        ".cue",
-        ".m3u",
-    ];
 
     const globalHashMap = new Map<string, Game>();
 
@@ -104,6 +36,10 @@ export async function runScanner(romFolder: string, apiKey?: string) {
         "bin",
         process.platform === "win32" ? "RAHasher.exe" : "RAHasher"
     );
+
+    if (!fs.existsSync(HASHER)) {
+        throw new Error(`RAHasher binary not found at ${HASHER}`);
+    }
 
     async function raHash(consoleId: number, file: string): Promise<string> {
         const { stdout } = await execFileAsync(HASHER, [
@@ -191,7 +127,7 @@ export async function runScanner(romFolder: string, apiKey?: string) {
             }
 
             const ext = path.extname(entry.name).toLowerCase();
-            if (extensionsToIgnore.includes(ext)) continue;
+            if (!allowedExtensions.has(ext)) continue;
 
             files.push(fullPath);
         }
@@ -202,11 +138,17 @@ export async function runScanner(romFolder: string, apiKey?: string) {
     function detectConsole(file: string): number | null {
         const relative = getRelative(file);
         const parts = relative.split("/");
-        const folder = parts.length > 1 ? parts[0] ? parts[0].toUpperCase() : "" : "";
 
-        if (consoleMap[folder]) return consoleMap[folder];
+        for (const part of parts) {
+            const system = detectSystemFromFolder(part);
+            if (system) return system;
+        }
+
         const ext = path.extname(file).toLowerCase();
-        if (extensionMap[ext]) return extensionMap[ext];
+        const possible = detectSystemFromExtension(ext);
+
+        if (possible.length === 1) return possible[0] as number | null;
+
         return null;
     }
 

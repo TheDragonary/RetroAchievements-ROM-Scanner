@@ -1,11 +1,11 @@
 {
   "name": "ra-scan",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Scan your ROM library and identify which games support RetroAchievements",
   "license": "GPL-3.0-only",
   "repository": {
     "type": "git",
-    "url": "https://github.com/TheDragonary/RetroAchievements-ROM-Scanner"
+    "url": "git+https://github.com/TheDragonary/RetroAchievements-ROM-Scanner.git"
   },
   "homepage": "https://github.com/TheDragonary/RetroAchievements-ROM-Scanner",
   "bugs": {
@@ -13,12 +13,13 @@
   },
   "type": "module",
   "bin": {
-    "ra-scan": "./dist/cli.js"
+    "ra-scan": "dist/cli.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
-    "dev": "node src/cli.ts",
     "start": "node dist/cli.js",
     "prepublishOnly": "npm run build",
     "build:linux": "npm run build && bun build dist/cli.js --compile --bytecode --target=bun-linux-x64 --outfile ra-scan",
@@ -38,7 +39,7 @@
     "@types/node": "^25.5.0"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "keywords": [
     "retroarch",

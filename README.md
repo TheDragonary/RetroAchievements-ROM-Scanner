@@ -11,6 +11,33 @@ If you prefer to use Node.js, go to [Getting Started](https://github.com/TheDrag
 - [Windows](https://github.com/TheDragonary/RetroAchievements-ROM-Scanner/releases/latest/download/ra-scan-windows-x64.zip)
 - [Linux](https://github.com/TheDragonary/RetroAchievements-ROM-Scanner/releases/latest/download/ra-scan-linux-x64.tar.gz)
 
+## Usage
+
+```bash
+Usage: ra-scan [options] <roms>
+
+Arguments:
+  roms                 ROM folder to scan
+
+Options:
+  -V, --version        output the version number
+  -k, --api-key <key>  RetroAchievements API key
+  -c, --clear-cache    clear cache before scanning
+  -h, --help           display help for command
+```
+
+### Examples:
+
+Scan a folder:
+```bash
+ra-scan -k YOUR_API_KEY ./ROMs/
+```
+
+Clear cache and rescan:
+```bash
+ra-scan -k YOUR_API_KEY -c ./ROMs/
+```
+
 ## Features
 
 - Scans a ROM library and detects supported RetroAchievements games
@@ -24,17 +51,19 @@ If you prefer to use Node.js, go to [Getting Started](https://github.com/TheDrag
 
 ## Supported Systems
 
-- NES / Famicom Disk System
+- NES
 - SNES
 - Nintendo 64
 - Game Boy / Color / Advance
 - Nintendo DS / DSi
 - Nintendo GameCube
 - Nintendo Wii
+- Sega Master System
 - Sega Genesis / Mega Drive
 - PlayStation
 - PlayStation 2
 - PlayStation Portable
+- And more
 
 ## Output
 
@@ -62,7 +91,7 @@ Example output:
 
 Make sure Node.js is installed on your system, then run the script using `npx`.
 
-```
+```bash
 npx ra-scan ROMs/ -k YOUR_API_KEY
 ```
 
@@ -71,17 +100,17 @@ npx ra-scan ROMs/ -k YOUR_API_KEY
 Make sure Node.js is installed on your system.
 
 Clone the repo
-```
+```bash
 git clone https://github.com/TheDragonary/RetroAchievements-ROM-Scanner.git
 ```
 
 Install dependencies
-```
+```bash
 npm install
 ```
 
 Place your ROMs inside a folder. Folder names should match the entries in `consoleMap`. Example structure:
-```
+```bash
 ROMs/
     NES/
         Super Mario Bros. (World).nes
@@ -96,6 +125,6 @@ ROMs/
 ```
 
 Run the script. Make sure to specify the path to your ROMs folder and supply your RetroAchievements API key. Subsequent runs don't require an API key as all data is stored in cache.
-```
-npm run start ROMs/ --api-key YOUR_API_KEY
+```bash
+npm run start -- ROMs/ --api-key YOUR_API_KEY
 ```
