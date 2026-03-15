@@ -12,15 +12,16 @@ export async function runScanner(romFolder: string, apiKey?: string) {
 
     const APP_DIR = getAppDir();
     const CACHE_DIR = paths.cache;
+    const API_DIR = path.join(CACHE_DIR, "api");
+    const SCAN_DIR = path.join(CACHE_DIR, "scan");
+    const HISTORY_DIR = path.join(CACHE_DIR, "history");
 
-    if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
-
-    const consolesPath = path.join(CACHE_DIR, "consoles.json");
-    const supportedPath = path.join(CACHE_DIR, "supported_games.json");
-    const unsupportedPath = path.join(CACHE_DIR, "unsupported_games.json");
-    const duplicatesPath = path.join(CACHE_DIR, "duplicate_games.json");
-    const hashHistoryPath = path.join(CACHE_DIR, "hash_history.json");
-    const hashIndexPath = path.join(CACHE_DIR, "hash_index.json");
+    const consolesPath = path.join(API_DIR, "consoles.json");
+    const supportedPath = path.join(SCAN_DIR, "supported_games.json");
+    const unsupportedPath = path.join(SCAN_DIR, "unsupported_games.json");
+    const duplicatesPath = path.join(SCAN_DIR, "duplicate_games.json");
+    const hashIndexPath = path.join(SCAN_DIR, "hash_index.json");
+    const hashHistoryPath = path.join(HISTORY_DIR, "hash_history.json");
 
     const ignoreSet: Set<string> = new Set([
         ".directory",
@@ -92,7 +93,7 @@ export async function runScanner(romFolder: string, apiKey?: string) {
                 if (!Array.isArray(games)) throw new Error("Invalid response format");
                 return games;
             } catch (err) {
-                console.warn(`Failed to fetch console ${consoleId} (attempt ${attempt}): ${(err as Error).message}`);
+                process.stdout.write(`Failed to fetch console ${consoleId} (attempt ${attempt}): ${(err as Error).message}`);
                 if (attempt < retries) await new Promise(r => setTimeout(r, delayMs));
             }
         }
@@ -109,16 +110,16 @@ export async function runScanner(romFolder: string, apiKey?: string) {
         }
 
         for (const c of consoles) {
-            process.stdout.write(`Loading ${c.Name}...`);
             process.stdout.clearLine(0);
             process.stdout.cursorTo(0);
+            process.stdout.write(`Loading ${c.Name}...`);
             
             let games: Game[];
-            if (!fs.existsSync(path.join(CACHE_DIR, `${c.ID}.json`))) {
+            if (!fs.existsSync(path.join(API_DIR, `${c.ID}.json`))) {
                 games = await fetchGamesForConsole(c.ID);
-                fs.writeFileSync(path.join(CACHE_DIR, `${c.ID}.json`), JSON.stringify(games, null, 2));
+                fs.writeFileSync(path.join(API_DIR, `${c.ID}.json`), JSON.stringify(games, null, 2));
             } else {
-                games = JSON.parse(fs.readFileSync(path.join(CACHE_DIR, `${c.ID}.json`), "utf8"));
+                games = JSON.parse(fs.readFileSync(path.join(API_DIR, `${c.ID}.json`), "utf8"));
             }
 
             for (const game of games) {
@@ -128,6 +129,8 @@ export async function runScanner(romFolder: string, apiKey?: string) {
             }
         }
 
+        process.stdout.clearLine(0);
+        process.stdout.cursorTo(0);
         console.log(`Loaded ${globalHashMap.size} hashes`);
     }
 
@@ -202,14 +205,14 @@ export async function runScanner(romFolder: string, apiKey?: string) {
     ): Map<string, string> {
         const duplicateGames = new Map<string, string>();
         let duplicateGroups = 0;
-        let duplicateFiles = 0;
 
         for (const [hash, files] of hashIndex) {
             if (files.length <= 1) continue;
 
             const [original, ...dupes] = files;
             duplicateGroups++;
-            duplicateFiles += files.length;
+
+            console.log(`Duplicate games: ${duplicateGroups}`)
 
             const game = globalHashMap.get(hash);
             console.log(`\n${game?.Title ?? "Unknown Game"}`);
@@ -231,9 +234,6 @@ export async function runScanner(romFolder: string, apiKey?: string) {
         }
 
         if (duplicateGames.size > 0) {
-            console.log(`\nDuplicate groups: ${duplicateGroups}`);
-            console.log(`Duplicate files: ${duplicateFiles}`);
-
             fs.writeFileSync(duplicatesPath, JSON.stringify(Object.fromEntries(duplicateGames), null, 2));
             fs.writeFileSync("duplicate_games.txt", Array.from(duplicateGames.keys()).join("\n"));
         } else {
@@ -253,37 +253,26 @@ export async function runScanner(romFolder: string, apiKey?: string) {
 
     let supportedGames = new Map<string, string>();
     let unsupportedGames = new Map<string, string>();
-    let hashHistory = new Map<string, { hash: string; size: number }>();
     let hashIndex = new Map<string, string[]>();
+    let hashHistory = new Map<string, { hash: string; size: number }>();
 
-    if (fs.existsSync(supportedPath)) {
-        supportedGames = new Map(Object.entries(JSON.parse(fs.readFileSync(supportedPath, "utf8"))));
-    }
-
-    if (fs.existsSync(unsupportedPath)) {
-        unsupportedGames = new Map(Object.entries(JSON.parse(fs.readFileSync(unsupportedPath, "utf8"))));
-    }
-
-    if (fs.existsSync(hashHistoryPath)) {
-        hashHistory = new Map(Object.entries(JSON.parse(fs.readFileSync(hashHistoryPath, "utf8"))));
-    }
-
-    if (fs.existsSync(hashIndexPath)) {
-        hashIndex = new Map(Object.entries(JSON.parse(fs.readFileSync(hashIndexPath, "utf8"))) as [string, string[]][]);
-    }
+    if (fs.existsSync(supportedPath)) supportedGames = new Map(Object.entries(JSON.parse(fs.readFileSync(supportedPath, "utf8"))));
+    if (fs.existsSync(unsupportedPath)) unsupportedGames = new Map(Object.entries(JSON.parse(fs.readFileSync(unsupportedPath, "utf8"))));
+    if (fs.existsSync(hashIndexPath)) hashIndex = new Map(Object.entries(JSON.parse(fs.readFileSync(hashIndexPath, "utf8"))) as [string, string[]][]);
+    if (fs.existsSync(hashHistoryPath)) hashHistory = new Map(Object.entries(JSON.parse(fs.readFileSync(hashHistoryPath, "utf8"))));
 
     cleanCache(supportedGames);
     cleanCache(unsupportedGames);
     cleanHashIndex(hashIndex);
+
+    const rootSystem = detectSystemFromFolder(path.basename(romFolder));
 
     for (let i = 0; i < romFiles.length; i++) {
         const file = romFiles[i];
         if (!file) continue;
         const relative = getRelative(file);
         const parts = relative.split("/");
-        const folder = parts.length > 1
-            ? parts[0]!.toUpperCase() : detectSystemFromFolder(path.basename(romFolder))
-            ? path.basename(romFolder).toUpperCase() : "";
+        const folder = parts.length > 1 ? parts[0]!.toUpperCase() : rootSystem ? path.basename(romFolder).toUpperCase() : "";
         const ext = path.extname(file).toLowerCase();
         const name = path.basename(file);
         const stat = fs.statSync(file);
@@ -298,9 +287,10 @@ export async function runScanner(romFolder: string, apiKey?: string) {
             continue;
         }
 
-        const cached = hashHistory.get(name);
+        const historyKey = `${name}:${size}`;
+        const cached = hashHistory.get(historyKey);
         let hash = supportedGames.get(relative) ?? unsupportedGames.get(relative) ?? null;
-        if (cached && cached.size === size) hash = cached.hash;
+        if (!hash && cached && cached.size === size) hash = cached.hash;
         if (hash && !globalHashMap.has(hash)) hash = null;
 
         if (!hash) {
@@ -333,21 +323,23 @@ export async function runScanner(romFolder: string, apiKey?: string) {
         if (game) supportedGames.set(relative, hash);
         else unsupportedGames.set(relative, hash);
 
-        hashHistory.set(name, { hash, size });
+        hashHistory.set(historyKey, { hash, size });
 
         process.stdout.clearLine(0);
         process.stdout.cursorTo(0);
         console.log(`${progress} ${game ? "✅" : "❌"} ${folder.padEnd(8)} ${name} -> ${game?.Title ?? "Not supported"}`);
     }
 
-    console.log(`Supported: ${supportedGames.size} / ${romFiles.length}`);
+    console.log("\nScan complete")
+    console.log(`\nSupported games: ${supportedGames.size}`);
+    console.log(`Unsupported games: ${unsupportedGames.size}`);
         
     handleDuplicates(hashIndex, supportedGames, unsupportedGames, globalHashMap);
 
     fs.writeFileSync(supportedPath, JSON.stringify(Object.fromEntries(supportedGames), null, 2));
     fs.writeFileSync(unsupportedPath, JSON.stringify(Object.fromEntries(unsupportedGames), null, 2));
-    fs.writeFileSync(hashHistoryPath, JSON.stringify(Object.fromEntries(hashHistory), null, 2));
     fs.writeFileSync(hashIndexPath, JSON.stringify(Object.fromEntries(hashIndex), null, 2));
+    fs.writeFileSync(hashHistoryPath, JSON.stringify(Object.fromEntries(hashHistory), null, 2));
 
     fs.writeFileSync("supported_games.txt", Array.from(supportedGames.keys()).join("\n"));
     fs.writeFileSync("unsupported_games.txt", Array.from(unsupportedGames.keys()).join("\n"));

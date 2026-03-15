@@ -1,12 +1,57 @@
-# RetroAchievements ROM Scanner
+# RetroAchievements ROM Scanner (ra-scan)
 
-A tool that scans your ROM library and matches each file with its corresponding RetroAchievements entry using the RetroAchievements API.
+![npm](https://img.shields.io/npm/v/ra-scan)
+![downloads](https://img.shields.io/npm/dt/ra-scan)
+![license](https://img.shields.io/github/license/TheDragonary/RetroAchievements-ROM-Scanner)
 
-It calculates ROM hashes and compares them against the official RetroAchievements hash database to identify which games in your collection support achievements.
+A command-line tool that scans your ROM library and matches each file with its corresponding RetroAchievements entry using the RetroAchievements API.
+
+It calculates ROM hashes and compares them against the official RetroAchievements database to identify which games in your collection support achievements on [RetroAchievements](https://retroachievements.org/).
+
+Useful for verifying large ROM collections and quickly identifying which games support RetroAchievements.
+
+Supports ROM libraries for NES, SNES, N64, Game Boy, PlayStation, and many other retro systems.
+
+## Contents
+- [Quick Start](#quick-start)
+- [RetroAchievements API Key](#retroachievements-api-key)
+- [Download](#download)
+- [Usage](#usage)
+- [Features](#features)
+- [Supported Systems](#supported-systems)
+- [Output](#output)
+- [Folder Structure](#folder-structure)
+- [Cache Structure](#cache-structure)
+- [Getting Started](#getting-started)
+
+## Quick Start
+
+Run the scanner without installing anything:
+
+```bash
+npx ra-scan -k YOUR_API_KEY ./ROMs/
+```
+
+## RetroAchievements API Key
+
+An API key is required to query the RetroAchievements database.
+
+1. Create an account at https://retroachievements.org
+2. Open your user settings
+3. Generate an API key
+4. Pass it to the scanner:
+
+```bash
+ra-scan -k YOUR_API_KEY ./ROMs/
+```
 
 ## Download
 
-If you prefer to use Node.js, go to [Getting Started](https://github.com/TheDragonary/RetroAchievements-ROM-Scanner?tab=readme-ov-file#getting-started) and follow the instructions there. Otherwise, you can download the precompiled binaries from [Releases](https://github.com/TheDragonary/RetroAchievements-ROM-Scanner/releases). We also have an [NPM package](https://www.npmjs.com/package/ra-scan) available too.
+If you prefer to run the tool without Node.js, download a precompiled binary from [Releases](https://github.com/TheDragonary/RetroAchievements-ROM-Scanner/releases).
+
+If you want to run it using Node.js, see the [Getting Started](#getting-started) section below.
+
+We also provide an [NPM package](https://www.npmjs.com/package/ra-scan).
 
 - [Windows](https://github.com/TheDragonary/RetroAchievements-ROM-Scanner/releases/latest/download/ra-scan-windows-x64.zip)
 - [Linux](https://github.com/TheDragonary/RetroAchievements-ROM-Scanner/releases/latest/download/ra-scan-linux-x64.tar.gz)
@@ -22,7 +67,8 @@ Arguments:
 Options:
   -V, --version        output the version number
   -k, --api-key <key>  RetroAchievements API key
-  -c, --clear-cache    clear cache before scanning
+  -C, --clear-cache    clear API and scan cache before scanning
+  -H, --clear-history  clear stored ROM hash history
   -h, --help           display help for command
 ```
 
@@ -33,9 +79,9 @@ Scan a folder:
 ra-scan -k YOUR_API_KEY ./ROMs/
 ```
 
-Clear cache and rescan:
+Clear cache + history and rescan:
 ```bash
-ra-scan -k YOUR_API_KEY -c ./ROMs/
+ra-scan -k YOUR_API_KEY -C -H ./ROMs/
 ```
 
 Windows:
@@ -45,9 +91,9 @@ Windows:
 
 ## Features
 
-- Scans a ROM library and detects supported RetroAchievements games
+- Scans a ROM library and detects games that support RetroAchievements
 - Uses the official RetroAchievements hash database
-- Supports compressed and disc formats (CHD, RVZ)
+- Supports compressed disc formats such as `.chd` and `.rvz`
 - Automatically detects console from folder name or file extension
 - Caches RetroAchievements console and game data
 - Caches previously calculated ROM hashes for faster rescans
@@ -56,19 +102,23 @@ Windows:
 
 ## Supported Systems
 
-- NES
-- SNES
-- Nintendo 64
-- Game Boy / Color / Advance
-- Nintendo DS / DSi
-- Nintendo GameCube
-- Nintendo Wii
-- Sega Master System
-- Sega Genesis / Mega Drive
-- PlayStation
-- PlayStation 2
-- PlayStation Portable
-- And more
+| System                    | Formats                 |
+|---------------------------|-------------------------|
+| NES                       | `.nes`                  |
+| SNES                      | `.sfc`, `.smc`          |
+| Nintendo 64               | `.n64`, `.z64`, `.v64`  |
+| Game Boy / Color          | `.gb`, `.gbc`           |
+| Game Boy Advance          | `.gba`                  |
+| Nintendo DS / DSi         | `.nds`                  |
+| Nintendo GameCube         | `.iso`, `.rvz`          |
+| Nintendo Wii              | `.iso`, `.rvz`          |
+| PlayStation               | `.bin`, `.cue`, `.chd`  |
+| PlayStation 2             | `.iso`, `.chd`          |
+| PlayStation Portable      | `.iso`, `.cso`          |
+| Sega Genesis / Mega Drive | `.gen`, `.md`, `.bin`   |
+| Sega Master System        | `.sms`                  |
+
+*And more systems supported by RetroAchievements.*
 
 ## Output
 
@@ -79,41 +129,55 @@ The script will:
 - Compare the hash against the official database
 - Cache API responses locally
 - Cache calculated ROM hashes
-- Output supported, unsupported games and any duplicates
+- Output supported and unsupported games
+- Duplicate ROMs are automatically detected and reported
 - Display total supported games
 - Save results to text files
 
 Example output:
+
+```bash
+ra-scan -k YOUR_API_KEY ./ROMs/
 ```
+
+```bash
 ✅ NES      Super Mario Bros. (World).nes -> Super Mario Bros.
-✅ SNES     Chrono Trigger (USA).sfc -> Chrono Trigger
+🔄 SNES     Chrono Trigger (USA).sfc -> Hashing...
 ❌ SNES     Super Mario World (Europe).sfc -> Not supported
+
+Scan complete
+
+Supported games: 200
+Unsupported games: 10
 ```
 
-## Getting Started
+## Folder Structure
 
-Make sure Node.js is installed on your system.
-
-Place your ROMs inside a folder. Folder names should match the entries in `consoleMap`. Example structure:
 ```bash
 ROMs/
-    NES/
-        Super Mario Bros. (World).nes
-    SNES/
-        Chrono Trigger (USA).sfc
-    NDS/
-        New Super Mario Bros. (Europe) (En,Fr,De,Es,It).nds
-    GC/
-        Animal Crossing (USA, Canada).rvz
-    PSX/
-        Final Fantasy VII (USA) (Disc 1).chd
+ ├─ NES/
+ │   └─ Super Mario Bros. (World).nes
+ ├─ SNES/
+ │   └─ Chrono Trigger (USA).sfc
+ ├─ NDS/
+ │   └─ New Super Mario Bros. (Europe) (En,Fr,De,Es,It).nds
+ ├─ GC/
+ │   └─ Animal Crossing (USA, Canada).rvz
+ └─ PSX/
+     └─ Final Fantasy VII (USA) (Disc 1).chd
 ```
 
-### Run with npx
+## Cache Structure
 
 ```bash
-npx ra-scan ROMs/ -k YOUR_API_KEY
+~/.cache/ra-scan-nodejs/
+ ├─ api/      RetroAchievements API data
+ ├─ scan/     scan results
+ └─ history/  previously calculated ROM hashes
 ```
+*Location may vary depending on your operating system.*
+
+## Getting Started
 
 ### Install with Node.js
 
@@ -129,5 +193,5 @@ npm install
 
 Run the script
 ```bash
-npm run start -- ROMs/ --api-key YOUR_API_KEY
+npm run start -- -k YOUR_API_KEY ./ROMs/
 ```
