@@ -327,7 +327,7 @@ export async function runScanner(romFolder: string, apiKey?: string) {
 
         process.stdout.clearLine(0);
         process.stdout.cursorTo(0);
-        console.log(`${progress} ${game ? "✅" : "❌"} ${folder.padEnd(8)} ${name} -> ${game?.Title ?? "Not supported"}`);
+        console.log(`${progress} ${game ? "✅" : "❌"} ${folder.padEnd(8)} ${name} -> ${game?.Title ?? "Not supported"} ${game ? `[${game.NumAchievements} Achievements]` : ""}`);
     }
 
     console.log("\nScan complete")
