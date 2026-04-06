@@ -1,5 +1,6 @@
 export type SystemDetection = {
     id: number;
+    shortName: string;
     names: string[];
     extensions: string[];
 };

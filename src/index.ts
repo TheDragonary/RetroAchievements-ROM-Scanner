@@ -3,8 +3,8 @@ import path from "path";
 import { hashHistoryPath, hashIndexPath, supportedPath, unsupportedPath } from "./paths.js";
 import { buildCache, cleanCache, cleanHashIndex } from "./cache.js";
 import { buildAllHashDatabases, globalHashMap } from "./api.js";
+import { detectConsole, getSystem } from "./detectSystems.js";
 import { handleDuplicates } from "./handleDuplicates.js";
-import { detectConsole } from "./detectSystems.js";
 import { scanSource } from "./scanSource.js";
 import { isRomFile } from "./filterRoms.js";
 import { raHashInput } from "./hasher.js";
@@ -38,9 +38,6 @@ export async function runScanner(romFolder: string, apiKey?: string) {
         const name = path.basename(file.path);
         const size = file.size ?? 0;
 
-        const parts = file.path.split("/");
-        const folder = parts.length > 1 ? parts[0]!.toUpperCase() : path.basename(file.source).toUpperCase();;
-
         const consoleId = detectConsole(file.path ?? file.internalPath ?? file.source);
 
         if (!consoleId) {
@@ -48,6 +45,8 @@ export async function runScanner(romFolder: string, apiKey?: string) {
             console.log(`${progress} ❌ Unknown console: ${file.path}`);
             continue;
         }
+
+        const consoleName = getSystem(consoleId)?.shortName ?? "UNKNOWN";
 
         const historyKey = `${name}:${size}:${file.source}`;
         const cached = hashHistory.get(historyKey);
@@ -57,7 +56,7 @@ export async function runScanner(romFolder: string, apiKey?: string) {
 
         if (!hash) {
             try {
-                process.stdout.write(`${progress} 🔄 ${folder.padEnd(8)} ${name} -> Hashing...`);
+                process.stdout.write(`${progress} 🔄 ${consoleName.padEnd(8)} ${name} -> Hashing...`);
                 const input = file.realPath ?? file.getStream?.();
                 if (!input) throw new Error("No input source available");
                 hash = await raHashInput(consoleId, input, name);
@@ -66,7 +65,7 @@ export async function runScanner(romFolder: string, apiKey?: string) {
                     errors++;
                     process.stdout.clearLine(0);
                     process.stdout.cursorTo(0);
-                    console.log(`${progress} ❌ ${folder.padEnd(8)} ${name} -> ${err.message}`);
+                    console.log(`${progress} ❌ ${consoleName.padEnd(8)} ${name} -> ${err.message}`);
                 }
             }
         }
@@ -87,7 +86,7 @@ export async function runScanner(romFolder: string, apiKey?: string) {
 
         process.stdout.clearLine(0);
         process.stdout.cursorTo(0);
-        console.log(`${progress} ${game ? "✅" : "❌"} ${folder.padEnd(8)} ${name} -> ${game?.Title ?? "Not supported"} ${game ? `[${game.NumAchievements} Achievements]` : ""}`);
+        console.log(`${progress} ${game ? "✅" : "❌"} ${consoleName.padEnd(8)} ${name} -> ${game?.Title ?? "Not supported"} ${game ? `[${game.NumAchievements} Achievements]` : ""}`);
     }
 
     console.log("\nScan complete")

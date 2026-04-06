@@ -1,5 +1,6 @@
 import path from "path";
 import { systems } from "./systemsMap.js";
+import type { SystemDetection } from "./types.js";
 
 function normalise(str: string) {
     return str
@@ -15,8 +16,11 @@ function normaliseExt(ext: string) {
 
 const extensionLookup = new Map<string, number[]>();
 const folderLookup = new Map<string, number>();
+const idMap = new Map<number, SystemDetection>();
 
 for (const system of systems) {
+    idMap.set(system.id, system);
+
     for (const name of system.names) {
         folderLookup.set(normalise(name), system.id);
     }
@@ -36,7 +40,7 @@ const folderAliasesSorted = [...folderLookup.entries()].sort(
     ([a], [b]) => b.length - a.length,
 );
 
-function detectSystemFromFolder(folder: string) {
+function detectSystemFromFolder(folder: string): number | null {
     const name = normalise(folder);
 
     for (const [alias, id] of folderAliasesSorted) {
@@ -46,7 +50,7 @@ function detectSystemFromFolder(folder: string) {
     return null;
 }
 
-function detectSystemFromExtension(ext: string) {
+function detectSystemFromExtension(ext: string): number[] {
     return extensionLookup.get(normaliseExt(ext)) ?? [];
 }
 
@@ -63,4 +67,8 @@ export function detectConsole(file: string): number | null {
     if (possible.length >= 1) return possible[0] ?? null;
 
     return null;
+}
+
+export function getSystem(id: number): SystemDetection | null {
+    return idMap.get(id) ?? null;
 }

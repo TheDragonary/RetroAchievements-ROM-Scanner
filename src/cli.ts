@@ -23,7 +23,7 @@ function createDirs() {
 program
     .name("ra-scan")
     .description("Scan ROM folders for RetroAchievements compatibility")
-    .version("0.1.6")
+    .version("0.2.0")
     .argument("<roms>", "ROM folder to scan")
     .option("-k, --api-key <key>", "RetroAchievements API key")
     .option("-C, --clear-cache", "clear API and scan cache before scanning")
