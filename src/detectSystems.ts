@@ -1,5 +1,4 @@
 import path from "path";
-import { getRelative } from "./paths.js";
 import { systems } from "./systemsMap.js";
 
 function normalise(str: string) {
@@ -37,7 +36,7 @@ const folderAliasesSorted = [...folderLookup.entries()].sort(
     ([a], [b]) => b.length - a.length,
 );
 
-export function detectSystemFromFolder(folder: string) {
+function detectSystemFromFolder(folder: string) {
     const name = normalise(folder);
 
     for (const [alias, id] of folderAliasesSorted) {
@@ -47,26 +46,21 @@ export function detectSystemFromFolder(folder: string) {
     return null;
 }
 
-export function detectSystemFromExtension(ext: string) {
+function detectSystemFromExtension(ext: string) {
     return extensionLookup.get(normaliseExt(ext)) ?? [];
 }
 
-export function detectConsole(romFolder: string, file: string): number | null {
-    const relative = getRelative(romFolder, file);
-    const parts = relative.split("/");
+export function detectConsole(file: string): number | null {
+    const parts = file.split("/");
 
-    for (const part of parts) {
+    for (const part of parts.slice(0, -1).reverse()) {
         const system = detectSystemFromFolder(part);
         if (system) return system;
     }
 
-    const system = detectSystemFromFolder(path.basename(romFolder));
-    if (system) return system;
-
-    const ext = path.extname(file).toLowerCase();
+    const ext = path.extname(file);
     const possible = detectSystemFromExtension(ext);
-
-    if (possible.length === 1) return possible[0] as number | null;
+    if (possible.length >= 1) return possible[0] ?? null;
 
     return null;
 }

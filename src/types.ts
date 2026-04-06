@@ -2,7 +2,7 @@ export type SystemDetection = {
     id: number;
     names: string[];
     extensions: string[];
-}
+};
 
 export interface Console {
     ID: number;
@@ -25,3 +25,12 @@ export interface Game {
     ForumTopicID: number;
     Hashes: string[];
 }
+
+export type ScanFile = {
+    path: string;
+    size: number;
+    source: string;
+    realPath?: string;
+    internalPath?: string;
+    getStream?: () => NodeJS.ReadableStream;
+};

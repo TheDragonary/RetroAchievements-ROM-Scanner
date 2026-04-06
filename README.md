@@ -94,6 +94,7 @@ Windows:
 - Scans a ROM library and detects games that support RetroAchievements
 - Uses the official RetroAchievements hash database
 - Supports compressed disc formats such as `.chd` and `.rvz`
+- Supports archive formats `.zip`, `.7z`, `.rar`
 - Automatically detects console from folder name or file extension
 - Caches RetroAchievements console and game data
 - Caches previously calculated ROM hashes for faster rescans

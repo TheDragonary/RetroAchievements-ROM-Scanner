@@ -27,13 +27,14 @@
     "build:windows": "bun run build && bun build dist/cli.js --compile --target=bun-windows-x64 --outfile build/ra-scan-windows-x64/ra-scan"
   },
   "dependencies": {
+    "7zip-bin": "^5.2.0",
     "commander": "^14.0.3",
-    "dolphin-tool": "^0.2512.1",
+    "dolphin-tool": "^0.2603.2",
     "env-paths": "^4.0.0"
   },
   "devDependencies": {
-    "@types/node": "^25.5.0",
-    "typescript": "^5.9.3"
+    "@types/node": "^25.5.2",
+    "typescript": "^6.0.2"
   },
   "engines": {
     "node": ">=20"
