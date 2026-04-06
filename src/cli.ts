@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
-import "dolphin-tool";
 import envPaths from "env-paths";
 import fs from "fs";
 import path from "path";
