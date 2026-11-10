@@ -15,7 +15,7 @@ try {
 const ARCHIVE_EXTS = [".zip", ".7z", ".rar"];
 
 function isArchive(file: string): boolean {
-    return ARCHIVE_EXTS.some(ext => file.toLowerCase().endsWith(ext));
+    return ARCHIVE_EXTS.some((ext) => file.toLowerCase().endsWith(ext));
 }
 
 async function listArchive(input: string): Promise<{ name: string; size: number }[]> {

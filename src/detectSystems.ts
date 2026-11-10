@@ -36,9 +36,7 @@ for (const system of systems) {
     }
 }
 
-const folderAliasesSorted = [...folderLookup.entries()].sort(
-    ([a], [b]) => b.length - a.length,
-);
+const folderAliasesSorted = [...folderLookup.entries()].sort(([a], [b]) => b.length - a.length);
 
 function detectSystemFromFolder(folder: string): number | null {
     const name = normalise(folder);

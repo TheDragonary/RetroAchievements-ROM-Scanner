@@ -17,10 +17,7 @@ export const hashIndexPath = path.join(SCAN_DIR, "hash_index.json");
 export const hashHistoryPath = path.join(HISTORY_DIR, "hash_history.json");
 
 function getAppDir(): string {
-    if (
-        process.execPath.endsWith("ra-scan") ||
-        process.execPath.endsWith("ra-scan.exe")
-    ) {
+    if (process.execPath.endsWith("ra-scan") || process.execPath.endsWith("ra-scan.exe")) {
         return path.dirname(process.execPath);
     }
     return path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");

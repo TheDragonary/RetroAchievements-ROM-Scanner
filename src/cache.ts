@@ -8,10 +8,23 @@ export function buildCache() {
     let hashIndex = new Map<string, string[]>();
     let hashHistory = new Map<string, { hash: string; size: number }>();
 
-    if (fs.existsSync(supportedPath)) supportedGames = new Map(Object.entries(JSON.parse(fs.readFileSync(supportedPath, "utf8"))));
-    if (fs.existsSync(unsupportedPath)) unsupportedGames = new Map(Object.entries(JSON.parse(fs.readFileSync(unsupportedPath, "utf8"))));
-    if (fs.existsSync(hashIndexPath)) hashIndex = new Map(Object.entries(JSON.parse(fs.readFileSync(hashIndexPath, "utf8"))) as [string, string[]][]);
-    if (fs.existsSync(hashHistoryPath)) hashHistory = new Map(Object.entries(JSON.parse(fs.readFileSync(hashHistoryPath, "utf8"))));
+    if (fs.existsSync(supportedPath))
+        supportedGames = new Map(
+            Object.entries(JSON.parse(fs.readFileSync(supportedPath, "utf8"))),
+        );
+    if (fs.existsSync(unsupportedPath))
+        unsupportedGames = new Map(
+            Object.entries(JSON.parse(fs.readFileSync(unsupportedPath, "utf8"))),
+        );
+    if (fs.existsSync(hashIndexPath))
+        hashIndex = new Map(
+            Object.entries(JSON.parse(fs.readFileSync(hashIndexPath, "utf8"))) as [
+                string,
+                string[],
+            ][],
+        );
+    if (fs.existsSync(hashHistoryPath))
+        hashHistory = new Map(Object.entries(JSON.parse(fs.readFileSync(hashHistoryPath, "utf8"))));
 
     return {
         supportedGames,
@@ -30,9 +43,7 @@ export function cleanCache(cache: Map<string, string>, romFolder: string) {
 
 export function cleanHashIndex(index: Map<string, string[]>, romFolder: string) {
     for (const [hash, paths] of index) {
-        const valid = paths.filter((p) =>
-            fs.existsSync(path.join(romFolder, p)),
-        );
+        const valid = paths.filter((p) => fs.existsSync(path.join(romFolder, p)));
 
         if (valid.length === 0) {
             index.delete(hash);

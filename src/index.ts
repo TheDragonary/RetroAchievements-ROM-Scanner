@@ -1,19 +1,19 @@
 import fs from "fs";
 import path from "path";
-import { hashHistoryPath, hashIndexPath, supportedPath, unsupportedPath } from "./paths.js";
-import { buildCache, cleanCache, cleanHashIndex } from "./cache.js";
 import { buildAllHashDatabases, globalHashMap } from "./api.js";
+import { buildCache, cleanCache, cleanHashIndex } from "./cache.js";
 import { detectConsole, getSystem } from "./detectSystems.js";
-import { handleDuplicates } from "./handleDuplicates.js";
-import { scanSource } from "./scanSource.js";
 import { isRomFile } from "./filterRoms.js";
+import { handleDuplicates } from "./handleDuplicates.js";
 import { raHashInput } from "./hasher.js";
+import { hashHistoryPath, hashIndexPath, supportedPath, unsupportedPath } from "./paths.js";
+import { scanSource } from "./scanSource.js";
 
 export async function runScanner(romFolder: string, apiKey?: string) {
     if (apiKey) await buildAllHashDatabases(apiKey);
 
     const { supportedGames, unsupportedGames, hashIndex, hashHistory } = buildCache();
-    
+
     cleanCache(supportedGames, romFolder);
     cleanCache(unsupportedGames, romFolder);
     cleanHashIndex(hashIndex, romFolder);
@@ -34,7 +34,7 @@ export async function runScanner(romFolder: string, apiKey?: string) {
         i++;
 
         const progress = `[${i}/${total}]`;
-        
+
         const name = path.basename(file.path);
         const size = file.size ?? 0;
 
@@ -56,7 +56,9 @@ export async function runScanner(romFolder: string, apiKey?: string) {
 
         if (!hash) {
             try {
-                process.stdout.write(`${progress} 🔄 ${consoleName.padEnd(8)} ${name} -> Hashing...`);
+                process.stdout.write(
+                    `${progress} 🔄 ${consoleName.padEnd(8)} ${name} -> Hashing...`,
+                );
                 const input = file.realPath ?? file.getStream?.();
                 if (!input) throw new Error("No input source available");
                 hash = await raHashInput(consoleId, input, name);
@@ -65,7 +67,9 @@ export async function runScanner(romFolder: string, apiKey?: string) {
                     errors++;
                     process.stdout.clearLine(0);
                     process.stdout.cursorTo(0);
-                    console.log(`${progress} ❌ ${consoleName.padEnd(8)} ${name} -> ${err.message}`);
+                    console.log(
+                        `${progress} ❌ ${consoleName.padEnd(8)} ${name} -> ${err.message}`,
+                    );
                 }
             }
         }
@@ -86,20 +90,31 @@ export async function runScanner(romFolder: string, apiKey?: string) {
 
         process.stdout.clearLine(0);
         process.stdout.cursorTo(0);
-        console.log(`${progress} ${game ? "✅" : "❌"} ${consoleName.padEnd(8)} ${name} -> ${game?.Title ?? "Not supported"} ${game ? `[${game.NumAchievements} Achievements]` : ""}`);
+        console.log(
+            `${progress} ${game ? "✅" : "❌"} ${consoleName.padEnd(8)} ${name} -> ${game?.Title ?? "Not supported"} ${game ? `[${game.NumAchievements} Achievements]` : ""}`,
+        );
     }
 
-    console.log("\nScan complete")
+    console.log("\nScan complete");
     console.log(`\nSupported games: ${supportedGames.size}`);
     console.log(`Unsupported games: ${unsupportedGames.size}`);
     if (errors > 0) console.log(`Errors: ${errors}`);
-        
+
     handleDuplicates(hashIndex, supportedGames, unsupportedGames, globalHashMap);
 
     fs.writeFileSync(supportedPath, JSON.stringify(Object.fromEntries(supportedGames), null, 2));
-    fs.writeFileSync(unsupportedPath, JSON.stringify(Object.fromEntries(unsupportedGames), null, 2));
+    fs.writeFileSync(
+        unsupportedPath,
+        JSON.stringify(Object.fromEntries(unsupportedGames), null, 2),
+    );
     fs.writeFileSync(hashIndexPath, JSON.stringify(Object.fromEntries(hashIndex), null, 2));
     fs.writeFileSync(hashHistoryPath, JSON.stringify(Object.fromEntries(hashHistory), null, 2));
-    fs.writeFileSync("supported_games.txt", Array.from(supportedGames.keys()).join("\n"));
-    fs.writeFileSync("unsupported_games.txt", Array.from(unsupportedGames.keys()).join("\n"));
+    fs.writeFileSync(
+        path.join(process.cwd(), "supported_games.txt"),
+        Array.from(supportedGames.keys()).join("\n"),
+    );
+    fs.writeFileSync(
+        path.join(process.cwd(), "unsupported_games.txt"),
+        Array.from(unsupportedGames.keys()).join("\n"),
+    );
 }

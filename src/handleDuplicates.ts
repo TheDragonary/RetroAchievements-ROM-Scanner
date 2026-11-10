@@ -43,10 +43,7 @@ export function handleDuplicates(
             duplicatesPath,
             JSON.stringify(Object.fromEntries(duplicateGames), null, 2),
         );
-        fs.writeFileSync(
-            "duplicate_games.txt",
-            Array.from(duplicateGames.keys()).join("\n"),
-        );
+        fs.writeFileSync("duplicate_games.txt", Array.from(duplicateGames.keys()).join("\n"));
     } else {
         if (fs.existsSync(duplicatesPath)) fs.unlinkSync(duplicatesPath);
         if (fs.existsSync("duplicate_games.txt")) fs.unlinkSync("duplicate_games.txt");
