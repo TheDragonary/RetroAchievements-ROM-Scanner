@@ -68,7 +68,10 @@ export async function* scanSource(input: string, root: string = input): AsyncGen
     }
 
     if (isArchive(input)) {
-        const files = await listArchive(input);
+        const files = await listArchive(input).catch(() => {
+            console.warn(`Skipping unreadable archive: ${input}`);
+            return [];
+        });
 
         for (const file of files) {
             if (/\/$/.test(file.name)) continue;
