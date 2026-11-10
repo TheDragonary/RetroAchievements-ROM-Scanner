@@ -22,15 +22,20 @@ function createDirs() {
 program
     .name("ra-scan")
     .description("Scan ROM folders for RetroAchievements compatibility")
-    .version("0.2.1")
+    .version("0.2.2")
     .argument("<roms>", "ROM folder to scan")
     .option("-k, --api-key <key>", "RetroAchievements API key")
-    .option("-C, --clear-cache", "clear API and scan cache before scanning")
+    .option("-A, --clear-api", "clear API cache")
+    .option("-C, --clear-cache", "clear scan cache")
     .option("-H, --clear-history", "clear stored ROM hash history")
     .action(async (roms, options) => {
+        if (options.clearApi) {
+            console.log("Clearing API:", paths.cache);
+            if (fs.existsSync(apiDir)) fs.rmSync(apiDir, { recursive: true, force: true });
+        }
+
         if (options.clearCache) {
             console.log("Clearing cache:", paths.cache);
-            if (fs.existsSync(apiDir)) fs.rmSync(apiDir, { recursive: true, force: true });
             if (fs.existsSync(scanDir)) fs.rmSync(scanDir, { recursive: true, force: true });
         }
 
