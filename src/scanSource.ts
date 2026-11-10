@@ -1,11 +1,15 @@
-import { path7za } from "7zip-bin";
 import { spawn } from "child_process";
 import fs from "fs";
 import path from "path";
+import { APP_DIR } from "./paths.js";
 import type { ScanFile } from "./types.js";
 
+const SEVEN_ZIP = path.join(APP_DIR, "bin", process.platform === "win32" ? "7za.exe" : "7za");
+
+if (!fs.existsSync(SEVEN_ZIP)) throw new Error(`7-Zip binary not found at ${SEVEN_ZIP}`);
+
 try {
-    fs.chmodSync(path7za, 0o755);
+    fs.chmodSync(SEVEN_ZIP, 0o755);
 } catch (e) {}
 
 const ARCHIVE_EXTS = [".zip", ".7z", ".rar"];
@@ -16,7 +20,7 @@ function isArchive(file: string): boolean {
 
 async function listArchive(input: string): Promise<{ name: string; size: number }[]> {
     return new Promise((resolve, reject) => {
-        const proc = spawn(path7za, ["l", "-slt", input]);
+        const proc = spawn(SEVEN_ZIP, ["l", "-slt", input]);
 
         let output = "";
         proc.stdout.on("data", (d) => (output += d.toString()));
@@ -47,7 +51,7 @@ async function listArchive(input: string): Promise<{ name: string; size: number 
 }
 
 function streamFromArchive(archive: string, file: string): NodeJS.ReadableStream {
-    const proc = spawn(path7za, ["e", "-so", archive, file]);
+    const proc = spawn(SEVEN_ZIP, ["e", "-so", archive, file]);
     if (!proc.stdout) throw new Error("Failed to get stdout from 7z");
     return proc.stdout;
 }

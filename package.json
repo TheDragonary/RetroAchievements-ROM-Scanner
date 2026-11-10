@@ -27,7 +27,6 @@
     "build:windows": "bun run build && bun build dist/cli.js --compile --target=bun-windows-x64 --outfile build/ra-scan-windows-x64/ra-scan"
   },
   "dependencies": {
-    "7zip-bin": "^5.2.0",
     "commander": "^15.0.0",
     "env-paths": "^4.0.0"
   },
